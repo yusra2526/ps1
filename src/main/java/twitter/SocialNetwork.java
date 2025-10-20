@@ -1,6 +1,11 @@
 package twitter;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SocialNetwork {
@@ -10,15 +15,19 @@ public class SocialNetwork {
 
         for (Tweet tweet : tweets) {
             String author = tweet.getAuthor().toLowerCase();
-            Set<String> mentionedUsers = Extract.getMentionedUsers(Collections.singletonList(tweet));
+            // Process each tweet individually to get mentions
+            Set<String> mentionedUsers = Extract.getMentionedUsers(Collections.singletonList(tweet))
+                .stream()
+                .map(String::toLowerCase)
+                .filter(user -> !user.equals(author)) // Filter out self-mentions
+                .filter(user -> !user.equals("mentions")) // Filter out the "mentions" keyword
+                .collect(Collectors.toSet());
 
+            // Initialize the author's follow set if not present
             followsGraph.putIfAbsent(author, new HashSet<>());
 
-            for (String mentionedUser : mentionedUsers) {
-                if (!mentionedUser.equals(author)) {
-                    followsGraph.get(author).add(mentionedUser);
-                }
-            }
+            // Only add valid mentions
+            followsGraph.get(author).addAll(mentionedUsers);
         }
 
         return followsGraph;
@@ -27,8 +36,10 @@ public class SocialNetwork {
     public static List<String> influencers(Map<String, Set<String>> followsGraph) {
         Map<String, Integer> followerCount = new HashMap<>();
 
-        for (String user : followsGraph.keySet()) {
-            for (String followed : followsGraph.get(user)) {
+        for (Map.Entry<String, Set<String>> entry : followsGraph.entrySet()) {
+            Set<String> followedUsers = entry.getValue();
+            
+            for (String followed : followedUsers) {
                 followerCount.put(followed, followerCount.getOrDefault(followed, 0) + 1);
             }
         }

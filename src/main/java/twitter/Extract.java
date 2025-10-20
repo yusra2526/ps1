@@ -33,16 +33,17 @@ public class Extract {
     }
 
     public static Set<String> getMentionedUsers(List<Tweet> tweets) {
-        Set<String> mentionedUsers = new HashSet<>();
-        Pattern pattern = Pattern.compile("(?<![A-Za-z0-9_-])@([A-Za-z0-9_-]+)(?![A-Za-z0-9_-])");
-
-        for (Tweet tweet : tweets) {
-            Matcher matcher = pattern.matcher(tweet.getText());
-            while (matcher.find()) {
-                mentionedUsers.add(matcher.group(1).toLowerCase());
-            }
+    Set<String> mentionedUsers = new HashSet<>();
+    // Explicitly match Twitter-style mentions
+    Pattern pattern = Pattern.compile("(?:^|\\s)@([a-zA-Z0-9_]{1,15})(?=\\s|$|[^a-zA-Z0-9_])");
+    
+    for (Tweet tweet : tweets) {
+        Matcher matcher = pattern.matcher(tweet.getText());
+        while (matcher.find()) {
+            mentionedUsers.add(matcher.group(1).toLowerCase());
         }
-
-        return mentionedUsers;
     }
+    
+    return mentionedUsers;
+}
 }
